@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package common;
+
+import "api/api.proto";
+
+option go_package = "/common";
+
+message BaseResp {
+    int32 status_code = 1[(api.go_tag)='json:"status_code"'];    // 状态码，0表示成功，非0表示具体错误码
+    string status_message = 2; // 状态描述信息
+}
+
+enum StatusCode {
+    STATUS_OK = 0;
+    STATUS_INVALID_REQUEST = 400;
+    STATUS_UNAUTHORIZED = 401;
+    STATUS_FORBIDDEN = 403;
+    STATUS_NOT_FOUND = 404;
+    STATUS_INTERNAL_ERROR = 500;
+}

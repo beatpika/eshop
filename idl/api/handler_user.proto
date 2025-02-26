@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package frontend.auth;
+
+import "api/api.proto";
+import "api/common.proto";
+
+option go_package = "basic/user";
+
+message UserRegisterReq {
+  string email = 2 [ (api.form) = "email" ];
+  string password = 3 [ (api.form) = "password" ];
+  string password_confirm = 4 [ (api.form) = "password_confirm" ];
+}
+
+message UserRegisterResp {
+  common.BaseResp base = 1;
+  int32 user_id = 2;
+  string token = 3;
+}
+
+message UserLoginReq {
+  string email = 1 [ (api.form) = "email" ];
+  string password = 2 [ (api.form) = "password" ];
+}
+
+message UserLoginResp {
+  common.BaseResp base = 1;
+  int32 user_id = 2;
+  string token = 3;
+}
+
+message UserLogoutReq {
+  int32 user_id = 1;
+}
+
+message UserLogoutResp {
+  common.BaseResp base = 1;
+}
+
+
+
+service UserHandler {
+  rpc login(UserLoginReq) returns (UserLoginResp) {
+    option (api.post) = "/user/login";
+  }
+  rpc register(UserRegisterReq) returns (UserRegisterResp) {
+    option (api.post) = "/user/register";
+  }
+  rpc logout(UserLogoutReq) returns (UserLogoutResp) {
+    option (api.post) = "/user/logout";
+  }
+}
