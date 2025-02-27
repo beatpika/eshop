@@ -14,3 +14,22 @@ rpc_gen目录下是rpc代码生成工具，用于生成rpc客户端代码。而a
 	opts = append(opts, server.WithRegistry(r))
 ``` 
 
+## 接口测试
+### login
+  ```
+  curl -X POST http://localhost:8080/user/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "wrong_password"
+  }'
+  ```
+预期
+  ```
+  {
+  "base": {
+    "status_code": 401,
+    "status_message": "用户名或密码错误"
+    }
+  }
+  ```

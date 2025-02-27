@@ -4,23 +4,82 @@ package auth;
 
 option go_package="/auth";
 
+// 错误码枚举
+enum ErrorCode {
+    ERROR_CODE_UNSPECIFIED = 0;
+    ERROR_CODE_INVALID_TOKEN = 1;
+    ERROR_CODE_TOKEN_EXPIRED = 2;
+    ERROR_CODE_USER_NOT_FOUND = 3;
+    ERROR_CODE_PERMISSION_DENIED = 4;
+}
+
+// 用户角色枚举
+enum UserRole {
+    USER_ROLE_UNSPECIFIED = 0;
+    USER_ROLE_USER = 1;
+    USER_ROLE_MERCHANT = 2;
+    USER_ROLE_ADMIN = 3;
+}
+
 service AuthService {
-    rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {}
-    rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {}
+    // 生成新的访问令牌
+    rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse) {}
+    
+    // 验证令牌
+    rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse) {}
+    
+    // 刷新令牌
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+    
+    // 撤销令牌
+    rpc RevokeToken(RevokeTokenRequest) returns (RevokeTokenResponse) {}
 }
 
-message DeliverTokenReq {
-    int32  user_id= 1;
+message GenerateTokenRequest {
+    int32 user_id = 1;
+    UserRole role = 2;
 }
 
-message VerifyTokenReq {
+message GenerateTokenResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    int64 expires_at = 3;     // Unix 时间戳，token过期时间
+    ErrorCode error_code = 4;
+    string error_message = 5;
+}
+
+message VerifyTokenRequest {
     string token = 1;
 }
 
-message DeliveryResp {
-    string token = 1;
-}
-
-message VerifyResp {
+message VerifyTokenResponse {
     bool is_valid = 1;
+    int32 user_id = 2;
+    UserRole role = 3;
+    repeated string permissions = 4;
+    int64 expires_at = 5;      // Unix 时间戳，token过期时间
+    ErrorCode error_code = 6;
+    string error_message = 7;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+    string access_token = 1;
+    string refresh_token = 2;  // 可选的新刷新令牌
+    int64 expires_at = 3;
+    ErrorCode error_code = 4;
+    string error_message = 5;
+}
+
+message RevokeTokenRequest {
+    string token = 1;
+}
+
+message RevokeTokenResponse {
+    bool success = 1;
+    ErrorCode error_code = 2;
+    string error_message = 3;
 }
