@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	conf *Config
-	once sync.Once
+	conf       *Config
+	once       sync.Once
+	configPath = ""
+	mu         sync.Mutex
 )
 
 type Config struct {
@@ -23,6 +25,7 @@ type Config struct {
 	MySQL    MySQL    `yaml:"mysql"`
 	Redis    Redis    `yaml:"redis"`
 	Registry Registry `yaml:"registry"`
+	JWT      JWT      `yaml:"jwt"`
 }
 
 type MySQL struct {
@@ -34,6 +37,10 @@ type Redis struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 	DB       int    `yaml:"db"`
+}
+
+type JWT struct {
+	SecretKey string `yaml:"secret_key" validate:"nonzero"`
 }
 
 type Kitex struct {
@@ -52,6 +59,28 @@ type Registry struct {
 	Password        string   `yaml:"password"`
 }
 
+// SetConfigPath 设置配置文件根路径
+func SetConfigPath(path string) {
+	mu.Lock()
+	defer mu.Unlock()
+	configPath = path
+}
+
+// GetConfigPath 获取配置文件根路径
+func GetConfigPath() string {
+	mu.Lock()
+	defer mu.Unlock()
+	return configPath
+}
+
+// ResetConfig 重置配置，用于测试
+func ResetConfig() {
+	mu.Lock()
+	defer mu.Unlock()
+	conf = nil
+	once = sync.Once{}
+}
+
 // GetConf gets configuration instance
 func GetConf() *Config {
 	once.Do(initConf)
@@ -59,7 +88,13 @@ func GetConf() *Config {
 }
 
 func initConf() {
-	prefix := "conf"
+	var prefix string
+	if configPath != "" {
+		prefix = configPath
+	} else {
+		prefix = "conf"
+	}
+
 	confFileRelPath := filepath.Join(prefix, filepath.Join(GetEnv(), "conf.yaml"))
 	content, err := ioutil.ReadFile(confFileRelPath)
 	if err != nil {

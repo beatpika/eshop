@@ -1,24 +1,33 @@
 package redis
 
 import (
-	"context"
-
 	"github.com/redis/go-redis/v9"
-	"github.com/beatpika/eshop/app/token/conf"
 )
 
 var (
-	RedisClient *redis.Client
+	// Client Redis客户端实例
+	Client *redis.Client
+	// TokenManager Token存储管理器实例
+	TokenManager *TokenStore
 )
 
-func Init() {
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     conf.GetConf().Redis.Address,
-		Username: conf.GetConf().Redis.Username,
-		Password: conf.GetConf().Redis.Password,
-		DB:       conf.GetConf().Redis.DB,
+// Init 初始化Redis连接
+func Init(address string, username string, password string, db int) error {
+	Client = redis.NewClient(&redis.Options{
+		Addr:     address,
+		Username: username,
+		Password: password,
+		DB:       db,
 	})
-	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
-		panic(err)
+
+	TokenManager = NewTokenStore(Client)
+	return nil
+}
+
+// Close 关闭Redis连接
+func Close() error {
+	if Client != nil {
+		return Client.Close()
 	}
+	return nil
 }
