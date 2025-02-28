@@ -8,76 +8,77 @@ import (
 )
 
 const (
-	// Token过期时间
-	AccessTokenExpiry  = 2 * time.Hour
+	// AccessTokenExpiry 访问令牌过期时间 - 2小时
+	AccessTokenExpiry = 2 * time.Hour
+
+	// RefreshTokenExpiry 刷新令牌过期时间 - 30天
 	RefreshTokenExpiry = 30 * 24 * time.Hour
 )
 
-type TokenClaims struct {
-	jwt.RegisteredClaims
-	UserID int32 `json:"user_id"`
-	Role   int32 `json:"role"`
-}
-
 type JWTUtil struct {
-	secretKey []byte
+	secretKey string
 }
 
-// NewJWTUtil 从配置中获取密钥创建JWT工具
+type CustomClaims struct {
+	jwt.RegisteredClaims
+	UserID int32  `json:"user_id"`
+	Role   int32  `json:"role"`
+	Nonce  string `json:"nonce,omitempty"` // 添加nonce字段确保token唯一性
+}
+
 func NewJWTUtil(secretKey string) *JWTUtil {
 	return &JWTUtil{
-		secretKey: []byte(secretKey),
+		secretKey: secretKey,
 	}
 }
 
 // GenerateToken 生成JWT token
 func (j *JWTUtil) GenerateToken(userID int32, role int32, expiry time.Duration) (string, error) {
 	now := time.Now()
-	claims := TokenClaims{
+	nonce := fmt.Sprintf("%d", now.UnixNano()) // 使用纳秒级时间戳作为nonce
+
+	claims := CustomClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
-			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 		UserID: userID,
 		Role:   role,
+		Nonce:  nonce,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(j.secretKey)
+	signedToken, err := token.SignedString([]byte(j.secretKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return signedToken, nil
 }
 
-// VerifyToken 验证JWT token
-func (j *JWTUtil) VerifyToken(tokenString string) (*TokenClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+// VerifyToken 验证并解析JWT token
+func (j *JWTUtil) VerifyToken(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return j.secretKey, nil
+		return []byte(j.secretKey), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(*TokenClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		return claims, nil
 	}
-
 	return nil, fmt.Errorf("invalid token")
 }
 
 // IsTokenExpired 检查token是否过期
-func (j *JWTUtil) IsTokenExpired(claims *TokenClaims) bool {
+func (j *JWTUtil) IsTokenExpired(claims *CustomClaims) bool {
 	if claims.ExpiresAt == nil {
 		return true
 	}
-	return time.Now().After(claims.ExpiresAt.Time)
-}
-
-// GetExpirationTime 获取token过期时间
-func (j *JWTUtil) GetExpirationTime(claims *TokenClaims) int64 {
-	if claims.ExpiresAt == nil {
-		return 0
-	}
-	return claims.ExpiresAt.Unix()
+	return claims.ExpiresAt.Before(time.Now())
 }

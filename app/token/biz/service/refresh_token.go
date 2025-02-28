@@ -44,24 +44,23 @@ func (s *RefreshTokenService) Run(req *auth.RefreshTokenRequest) (resp *auth.Ref
 	// 获取旧的access token
 	oldAccessToken := refreshTokenData["access_token"]
 
-	// 获取旧token的信息以获取用户角色
-	oldTokenData, err := redis.TokenManager.GetAccessToken(s.ctx, oldAccessToken)
-	if err != nil {
-		// 如果旧token已经不存在，我们仍然可以继续，因为我们有用户ID
-		oldTokenData = make(map[string]string)
-	}
-
-	// 获取用户角色，如果旧token不存在则默认为普通用户
-	role, _ := strconv.ParseInt(oldTokenData["role"], 10, 32)
-	if role == 0 {
-		role = int64(auth.UserRole_USER_ROLE_USER)
-	}
-
-	// 删除旧的访问令牌（即使可能已经不存在）
+	// 先删除旧的访问令牌
 	if oldAccessToken != "" {
-		// 忽略错误，因为token可能已经不存在
 		_ = redis.TokenManager.DeleteAccessToken(s.ctx, oldAccessToken, int32(userID))
+		// 等待删除操作完成
+		time.Sleep(50 * time.Millisecond)
+
+		// 确认旧token已被删除
+		_, err := redis.TokenManager.GetAccessToken(s.ctx, oldAccessToken)
+		if err == nil {
+			resp.ErrorCode = auth.ErrorCode_ERROR_CODE_UNSPECIFIED
+			resp.ErrorMessage = "failed to delete old access token"
+			return resp, nil
+		}
 	}
+
+	// 获取用户角色（默认为普通用户）
+	role := int64(auth.UserRole_USER_ROLE_USER)
 
 	// 生成新的访问令牌
 	accessToken, expiresAt, err := s.generateNewAccessToken(int32(userID), auth.UserRole(role))
@@ -99,7 +98,8 @@ func (s *RefreshTokenService) Run(req *auth.RefreshTokenRequest) (resp *auth.Ref
 
 // generateNewAccessToken 生成新的访问令牌
 func (s *RefreshTokenService) generateNewAccessToken(userID int32, role auth.UserRole) (string, int64, error) {
-	expiresAt := time.Now().Add(utils.AccessTokenExpiry).Unix()
+	now := time.Now()
+	expiresAt := now.Add(utils.AccessTokenExpiry).Unix()
 	token, err := jwtUtil.GenerateToken(userID, int32(role), utils.AccessTokenExpiry)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to generate JWT token: %w", err)

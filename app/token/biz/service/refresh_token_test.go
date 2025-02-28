@@ -33,9 +33,18 @@ func TestRefreshTokenService_Run(t *testing.T) {
 
 	oldAccessToken := genResp.AccessToken
 
+	// 验证初始token已经保存到Redis
+	_, err = tokenRedis.TokenManager.GetAccessToken(ctx, oldAccessToken)
+	assert.NoError(t, err, "初始token应该已保存到Redis")
+
 	svc := NewRefreshTokenService(ctx)
 
 	t.Run("使用有效的refresh_token", func(t *testing.T) {
+		// 先验证旧token存在
+		_, err = tokenRedis.TokenManager.GetAccessToken(ctx, oldAccessToken)
+		assert.NoError(t, err, "刷新前旧token应该存在")
+
+		// 执行刷新
 		resp, err := svc.Run(&auth.RefreshTokenRequest{
 			RefreshToken: genResp.RefreshToken,
 		})
@@ -43,21 +52,20 @@ func TestRefreshTokenService_Run(t *testing.T) {
 
 		// 基本响应检查
 		assert.NotEmpty(t, resp.AccessToken, "新的access token不应为空")
+		assert.NotEqual(t, oldAccessToken, resp.AccessToken, "新旧token不应相同")
 		assert.Equal(t, genResp.RefreshToken, resp.RefreshToken, "refresh token应该保持不变")
 		assert.Equal(t, auth.ErrorCode_ERROR_CODE_UNSPECIFIED, resp.ErrorCode)
 		assert.Empty(t, resp.ErrorMessage)
 
-		// 验证新token可以在Redis中找到
+		// 验证新token在Redis中的状态
 		tokenData, err := tokenRedis.TokenManager.GetAccessToken(ctx, resp.AccessToken)
 		assert.NoError(t, err)
 		assert.NotNil(t, tokenData)
 		assert.Equal(t, "123", tokenData["user_id"])
 
 		// 验证旧token已从Redis中删除
+		time.Sleep(100 * time.Millisecond) // 给Redis一些时间来完成删除操作
 		_, err = tokenRedis.TokenManager.GetAccessToken(ctx, oldAccessToken)
-		if err == nil {
-			t.Errorf("旧的access token应该已被删除，但仍然存在: %v", oldAccessToken)
-		}
 		assert.Error(t, err, "旧的access token应该已被删除")
 	})
 
