@@ -19,6 +19,7 @@ var (
 func Init() {
 	once.Do(func() {
 		InitUserClient()
+		InitTokenClient()
 	})
 }
 
