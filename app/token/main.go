@@ -4,6 +4,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/beatpika/eshop/app/token/biz/dal/redis"
+	"github.com/beatpika/eshop/app/token/biz/utils"
 	"github.com/beatpika/eshop/app/token/conf"
 	"github.com/beatpika/eshop/rpc_gen/kitex_gen/auth/authservice"
 	"github.com/cloudwego/kitex/pkg/klog"
@@ -27,6 +29,26 @@ func main() {
 }
 
 func kitexInit() (opts []server.Option) {
+	// 初始化Redis
+	redisConfig := conf.GetConf().Redis
+	err := redis.Init(redisConfig.Address, redisConfig.Username, redisConfig.Password, redisConfig.DB)
+	if err != nil {
+		klog.Fatalf("Failed to initialize Redis: %v", err)
+	}
+	// 注册关闭钩子
+	server.RegisterShutdownHook(func() {
+		if err := redis.Close(); err != nil {
+			klog.Errorf("Failed to close Redis connection: %v", err)
+		}
+	})
+
+	// 初始化JWT工具
+	jwtSecret := conf.GetConf().JWT.SecretKey
+	if jwtSecret == "" {
+		klog.Fatal("JWT secret key is required")
+	}
+	utils.InitJWTUtil(jwtSecret)
+
 	// address
 	addr, err := net.ResolveTCPAddr("tcp", conf.GetConf().Kitex.Address)
 	if err != nil {

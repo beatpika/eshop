@@ -15,6 +15,9 @@ const (
 	RefreshTokenExpiry = 30 * 24 * time.Hour
 )
 
+// DefaultJWTUtil 默认的JWT工具实例
+var DefaultJWTUtil *JWTUtil
+
 type JWTUtil struct {
 	secretKey string
 }
@@ -24,6 +27,11 @@ type CustomClaims struct {
 	UserID int32  `json:"user_id"`
 	Role   int32  `json:"role"`
 	Nonce  string `json:"nonce,omitempty"` // 添加nonce字段确保token唯一性
+}
+
+// InitJWTUtil 初始化默认的JWT工具
+func InitJWTUtil(secretKey string) {
+	DefaultJWTUtil = NewJWTUtil(secretKey)
 }
 
 func NewJWTUtil(secretKey string) *JWTUtil {

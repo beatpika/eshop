@@ -21,3 +21,6 @@ redis:
   username: ""
   password: ""
   db: 0
+
+jwt:
+  secret_key: "your-256-bit-secret"  # 建议使用一个强密钥，至少32字节长

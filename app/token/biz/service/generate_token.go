@@ -16,7 +16,6 @@ type GenerateTokenService struct {
 }
 
 func NewGenerateTokenService(ctx context.Context) *GenerateTokenService {
-	initJWTUtil() // 确保JWT工具已初始化
 	return &GenerateTokenService{
 		ctx: ctx,
 	}
@@ -25,6 +24,13 @@ func NewGenerateTokenService(ctx context.Context) *GenerateTokenService {
 func (s *GenerateTokenService) Run(req *auth.GenerateTokenRequest) (resp *auth.GenerateTokenResponse, err error) {
 	resp = &auth.GenerateTokenResponse{
 		ErrorCode: auth.ErrorCode_ERROR_CODE_UNSPECIFIED,
+	}
+
+	// 检查JWT工具是否已初始化
+	if utils.DefaultJWTUtil == nil {
+		resp.ErrorCode = auth.ErrorCode_ERROR_CODE_UNSPECIFIED
+		resp.ErrorMessage = "JWT utility not initialized"
+		return resp, nil
 	}
 
 	// 生成访问令牌
@@ -69,7 +75,7 @@ func (s *GenerateTokenService) Run(req *auth.GenerateTokenRequest) (resp *auth.G
 // generateAccessToken 生成访问令牌
 func (s *GenerateTokenService) generateAccessToken(userID int32, role auth.UserRole) (string, int64, error) {
 	expiresAt := time.Now().Add(utils.AccessTokenExpiry).Unix()
-	token, err := jwtUtil.GenerateToken(userID, int32(role), utils.AccessTokenExpiry)
+	token, err := utils.DefaultJWTUtil.GenerateToken(userID, int32(role), utils.AccessTokenExpiry)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to generate JWT token: %w", err)
 	}
