@@ -9,6 +9,7 @@ import (
 	"github.com/beatpika/eshop/app/token/biz/dal/redis"
 	"github.com/beatpika/eshop/app/token/biz/utils"
 	auth "github.com/beatpika/eshop/rpc_gen/kitex_gen/auth"
+	"github.com/google/uuid"
 )
 
 type RefreshTokenService struct {
@@ -44,7 +45,15 @@ func (s *RefreshTokenService) Run(req *auth.RefreshTokenRequest) (resp *auth.Ref
 	// 获取旧的access token
 	oldAccessToken := refreshTokenData["access_token"]
 
-	// 先删除旧的访问令牌
+	// 删除旧的refresh token
+	err = redis.TokenManager.DeleteRefreshToken(s.ctx, req.RefreshToken)
+	if err != nil {
+		resp.ErrorCode = auth.ErrorCode_ERROR_CODE_UNSPECIFIED
+		resp.ErrorMessage = fmt.Sprintf("failed to delete old refresh token: %v", err)
+		return resp, nil
+	}
+
+	// 删除旧的access token
 	if oldAccessToken != "" {
 		_ = redis.TokenManager.DeleteAccessToken(s.ctx, oldAccessToken, int32(userID))
 		// 等待删除操作完成
@@ -70,6 +79,9 @@ func (s *RefreshTokenService) Run(req *auth.RefreshTokenRequest) (resp *auth.Ref
 		return resp, nil
 	}
 
+	// 生成新的refresh token
+	newRefreshToken := uuid.New().String()
+
 	// 保存新的访问令牌
 	err = redis.TokenManager.SaveAccessToken(s.ctx, accessToken, int32(userID), int32(role), expiresAt)
 	if err != nil {
@@ -78,18 +90,21 @@ func (s *RefreshTokenService) Run(req *auth.RefreshTokenRequest) (resp *auth.Ref
 		return resp, nil
 	}
 
-	// 更新refresh token关联的access token
-	err = redis.TokenManager.SaveRefreshToken(s.ctx, req.RefreshToken, accessToken, int32(userID), expiresAt)
+	// 计算refresh token的过期时间（30天）
+	refreshExpiresAt := time.Now().Add(utils.RefreshTokenExpiry).Unix()
+
+	// 保存新的refresh token
+	err = redis.TokenManager.SaveRefreshToken(s.ctx, newRefreshToken, accessToken, int32(userID), refreshExpiresAt)
 	if err != nil {
 		resp.ErrorCode = auth.ErrorCode_ERROR_CODE_UNSPECIFIED
-		resp.ErrorMessage = fmt.Sprintf("failed to update refresh token: %v", err)
+		resp.ErrorMessage = fmt.Sprintf("failed to save new refresh token: %v", err)
 		return resp, nil
 	}
 
 	// 填充响应
 	resp.AccessToken = accessToken
 	resp.ExpiresAt = expiresAt
-	resp.RefreshToken = req.RefreshToken // 返回相同的refresh token
+	resp.RefreshToken = newRefreshToken // 返回新的refresh token
 	resp.ErrorCode = auth.ErrorCode_ERROR_CODE_UNSPECIFIED
 	resp.ErrorMessage = ""
 
