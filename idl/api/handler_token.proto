@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package frontend.auth;
+
+import "api/api.proto";
+import "api/common.proto";
+
+option go_package = "basic/token";
+
+message GenerateTokenReq {
+    int32 user_id = 1 [(api.form) = "user_id"];
+}
+
+message GenerateTokenResp {
+    common.BaseResp base = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    int64 expires_in = 4;  // token过期时间（秒）
+}
+
+message RefreshTokenReq {
+    string refresh_token = 1 [(api.form) = "refresh_token"];
+}
+
+message RefreshTokenResp {
+    common.BaseResp base = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    int64 expires_in = 4;
+}
+
+message VerifyTokenReq {
+    string token = 1 [(api.form) = "token"];
+}
+
+message VerifyTokenResp {
+    common.BaseResp base = 1;
+    bool is_valid = 2;
+    int32 user_id = 3;  // 如果token有效，返回对应的用户ID
+}
+
+message RevokeTokenReq {
+    string token = 1 [(api.form) = "token"];
+}
+
+message RevokeTokenResp {
+    common.BaseResp base = 1;
+}
+
+service TokenHandler {
+    rpc GenerateToken(GenerateTokenReq) returns (GenerateTokenResp) {
+        option (api.post) = "/token/generate";
+    }
+    
+    rpc RefreshToken(RefreshTokenReq) returns (RefreshTokenResp) {
+        option (api.post) = "/token/refresh";
+    }
+    
+    rpc VerifyToken(VerifyTokenReq) returns (VerifyTokenResp) {
+        option (api.post) = "/token/verify";
+    }
+    
+    rpc RevokeToken(RevokeTokenReq) returns (RevokeTokenResp) {
+        option (api.post) = "/token/revoke";
+    }
+}
