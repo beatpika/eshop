@@ -1,28 +1,101 @@
-syntax="proto3";
+syntax = "proto3";
 
 package user;
 
-option go_package="/user";
+option go_package = "/user";
 
 service UserService {
-    rpc Register(RegisterReq) returns (RegisterResp) {}
-    rpc Login(LoginReq) returns (LoginResp) {}
+    // 现有接口
+    rpc Register(RegisterReq) returns (RegisterResp);
+    rpc Login(LoginReq) returns (LoginResp);
+    
+    // 新增接口
+    rpc GetUserInfo(GetUserInfoReq) returns (GetUserInfoResp);
+    rpc UpdateUserInfo(UpdateUserInfoReq) returns (UpdateUserInfoResp);
+    rpc UpdatePassword(UpdatePasswordReq) returns (UpdatePasswordResp);
+    rpc UpdatePhone(UpdatePhoneReq) returns (UpdatePhoneResp);
+    rpc DeactivateAccount(DeactivateAccountReq) returns (DeactivateAccountResp);
 }
 
 message RegisterReq {
     string email = 1;
-    string password = 2;
+    string username = 2;
+    string password = 3;
+    string phone = 4;
 }
 
 message RegisterResp {
     int32 user_id = 1;
+    string username = 2;
 }
 
 message LoginReq {
-    string email= 1;
+    string email = 1;
     string password = 2;
 }
 
 message LoginResp {
     int32 user_id = 1;
+    string username = 2;
+    string email = 3;
+    string avatar = 4;
+}
+
+message GetUserInfoReq {
+    int32 user_id = 1;
+}
+
+message GetUserInfoResp {
+    UserInfo user = 1;
+}
+
+message UpdateUserInfoReq {
+    int32 user_id = 1;
+    string username = 2;
+    string avatar = 3;
+    string address = 4;
+}
+
+message UpdateUserInfoResp {
+    bool success = 1;
+}
+
+message UpdatePasswordReq {
+    int32 user_id = 1;
+    string old_password = 2;
+    string new_password = 3;
+}
+
+message UpdatePasswordResp {
+    bool success = 1;
+}
+
+message UpdatePhoneReq {
+    int32 user_id = 1;
+    string phone = 2;
+    string verify_code = 3;
+}
+
+message UpdatePhoneResp {
+    bool success = 1;
+}
+
+message DeactivateAccountReq {
+    int32 user_id = 1;
+    string password = 2;
+}
+
+message DeactivateAccountResp {
+    bool success = 1;
+}
+
+message UserInfo {
+    int32 user_id = 1;
+    string username = 2;
+    string email = 3;
+    string phone = 4;
+    string avatar = 5;
+    string address = 6;
+    int32 status = 7;
+    int64 created_at = 8;
 }

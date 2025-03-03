@@ -30,3 +30,28 @@ func _registerMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _deactivateaccountMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getuserinfoMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _updateuserinfoMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _updatepasswordMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _updatephoneMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
