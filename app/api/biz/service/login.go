@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"strings"
 
-	user "github.com/beatpika/eshop/app/api/hertz_gen/basic/user"
+	"github.com/beatpika/eshop/app/api/hertz_gen/basic/user"
 	"github.com/beatpika/eshop/app/api/hertz_gen/common"
 	"github.com/beatpika/eshop/app/api/infra/rpc"
-	kitex_user "github.com/beatpika/eshop/rpc_gen/kitex_gen/user"
+	"github.com/beatpika/eshop/rpc_gen/kitex_gen/auth"
+	user_pb "github.com/beatpika/eshop/rpc_gen/kitex_gen/user"
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
@@ -21,44 +21,38 @@ func NewLoginService(Context context.Context, RequestContext *app.RequestContext
 }
 
 func (h *LoginService) Run(req *user.UserLoginReq) (resp *user.UserLoginResp, err error) {
-	// 创建默认响应
-	resp = &user.UserLoginResp{
-		Base: &common.BaseResp{
-			StatusCode:    0, // 成功状态码
-			StatusMessage: "success",
-		},
-	}
+	resp = new(user.UserLoginResp)
+	resp.Base = new(common.BaseResp)
 
-	// 基本参数验证
-	if req.Email == "" || req.Password == "" {
-		resp.Base.StatusCode = 400 // 无效请求
-		resp.Base.StatusMessage = "邮箱和密码不能为空"
-		return resp, nil
-	}
-
-	// 将 API 请求转换为 RPC 请求
-	rpcReq := &kitex_user.LoginReq{
+	// 调用 user RPC 服务进行登录
+	loginResp, err := rpc.UserClient.Login(h.Context, &user_pb.LoginReq{
 		Email:    req.Email,
 		Password: req.Password,
-	}
-
-	// 调用 RPC
-	rpcResp, err := rpc.UserClient.Login(h.Context, rpcReq)
+	})
 	if err != nil {
-		// 处理不同类型的错误
-		if strings.Contains(err.Error(), "crypto/bcrypt") {
-			resp.Base.StatusCode = 401 // 未授权
-			resp.Base.StatusMessage = "用户名或密码错误"
-		} else {
-			resp.Base.StatusCode = 500 // 内部错误
-			resp.Base.StatusMessage = "登录服务暂时不可用，请稍后再试"
-		}
-		return resp, nil
+		resp.Base.StatusCode = int32(common.StatusCode_STATUS_INTERNAL_ERROR)
+		resp.Base.StatusMessage = err.Error()
+		return resp, err
 	}
 
-	// 成功情况
-	resp.UserId = rpcResp.UserId
-	resp.Token = "" // Token 字段可以根据需要设置
+	// 生成登录令牌
+	tokenResp, err := rpc.TokenClient.GenerateToken(h.Context, &auth.GenerateTokenRequest{
+		UserId: loginResp.UserId,
+		Role:   auth.UserRole_USER_ROLE_USER,
+	})
+	if err != nil {
+		resp.Base.StatusCode = int32(common.StatusCode_STATUS_INTERNAL_ERROR)
+		resp.Base.StatusMessage = err.Error()
+		return resp, err
+	}
+
+	// 设置响应
+	resp.Base.StatusCode = int32(common.StatusCode_STATUS_OK)
+	resp.Base.StatusMessage = "Success"
+	resp.UserId = loginResp.UserId
+	resp.Token = tokenResp.AccessToken
+	resp.Username = loginResp.Username
+	resp.Avatar = loginResp.Avatar
 
 	return resp, nil
 }
