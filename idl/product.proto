@@ -4,45 +4,234 @@ package product;
 
 option go_package = "/product";
 
-service ProductCatalogService {
-  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {}
-  rpc GetProduct(GetProductReq) returns (GetProductResp) {}
-  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {}
+// 商品服务
+service ProductService {
+    // 商品管理
+    rpc CreateProduct(CreateProductReq) returns (CreateProductResp);
+    rpc UpdateProduct(UpdateProductReq) returns (UpdateProductResp);
+    rpc GetProduct(GetProductReq) returns (GetProductResp);
+    rpc ListProducts(ListProductsReq) returns (ListProductsResp);
+    rpc DeleteProduct(DeleteProductReq) returns (DeleteProductResp);
+    rpc UpdateProductStatus(UpdateProductStatusReq) returns (UpdateProductStatusResp);
+    
+    // SKU管理
+    rpc CreateSKU(CreateSKUReq) returns (CreateSKUResp);
+    rpc UpdateSKU(UpdateSKUReq) returns (UpdateSKUResp);
+    rpc DeleteSKU(DeleteSKUReq) returns (DeleteSKUResp);
+    rpc UpdateSKUStock(UpdateSKUStockReq) returns (UpdateSKUStockResp);
+    
+    // 分类管理
+    rpc CreateCategory(CreateCategoryReq) returns (CreateCategoryResp);
+    rpc UpdateCategory(UpdateCategoryReq) returns (UpdateCategoryResp);
+    rpc DeleteCategory(DeleteCategoryReq) returns (DeleteCategoryResp);
+    rpc ListCategories(ListCategoriesReq) returns (ListCategoriesResp);
+    rpc GetCategoryTree(GetCategoryTreeReq) returns (GetCategoryTreeResp);
+    
+    // 商品搜索
+    rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp);
+    rpc GetProductsByCategory(GetProductsByCategoryReq) returns (GetProductsByCategoryResp);
 }
 
-message ListProductsReq{
-  int32 page = 1;
-  int64 pageSize = 2;
-
-  string categoryName = 3;
-}
-
+// 基础消息体
 message Product {
-  uint32 id = 1;
-  string name = 2;
-  string description = 3;
-  string picture = 4;
-  float price = 5;
-
-  repeated string categories = 6;
+    int64 id = 1;                    // 商品ID
+    string name = 2;                 // 商品名称
+    string description = 3;          // 商品描述
+    int64 category_id = 4;          // 分类ID
+    repeated string images = 5;      // 商品图片URL列表
+    int64 price = 6;                // 价格（单位：分）
+    int32 status = 7;               // 商品状态：1-待上架 2-已上架 3-已下架
+    repeated SKU skus = 8;          // SKU列表
+    int64 created_at = 9;           // 创建时间
+    int64 updated_at = 10;          // 更新时间
 }
 
-message ListProductsResp {
-  repeated Product products = 1;
+message SKU {
+    int64 id = 1;                    // SKU ID
+    int64 product_id = 2;           // 商品ID
+    map<string, string> specs = 3;   // 规格信息，如 {"color": "红色", "size": "XL"}
+    int64 price = 4;                // SKU价格（单位：分）
+    int32 stock = 5;                // 库存数量
+    string code = 6;                // SKU编码
+}
+
+message Category {
+    int64 id = 1;                    // 分类ID
+    string name = 2;                 // 分类名称
+    int64 parent_id = 3;            // 父分类ID，0表示一级分类
+    int32 level = 4;                // 分类层级：1-一级分类 2-二级分类 3-三级分类
+    int32 sort_order = 5;           // 排序序号
+}
+
+// 商品管理接口消息体
+message CreateProductReq {
+    string name = 1;                 // 商品名称
+    string description = 2;          // 商品描述
+    int64 category_id = 3;          // 分类ID
+    repeated string images = 4;      // 商品图片URL列表
+    int64 price = 5;                // 价格（单位：分）
+    repeated SKU skus = 6;          // SKU列表
+}
+
+message CreateProductResp {
+    Product product = 1;             // 创建的商品信息
+}
+
+message UpdateProductReq {
+    int64 id = 1;                    // 商品ID
+    string name = 2;                 // 商品名称
+    string description = 3;          // 商品描述
+    int64 category_id = 4;          // 分类ID
+    repeated string images = 5;      // 商品图片URL列表
+    int64 price = 6;                // 价格（单位：分）
+}
+
+message UpdateProductResp {
+    Product product = 1;             // 更新后的商品信息
 }
 
 message GetProductReq {
-  uint32 id = 1;
+    int64 id = 1;                    // 商品ID
 }
 
 message GetProductResp {
-  Product product = 1;
+    Product product = 1;             // 商品信息
 }
 
+message ListProductsReq {
+    int32 page_size = 1;            // 每页数量
+    int32 page = 2;                 // 页码
+}
+
+message ListProductsResp {
+    repeated Product products = 1;    // 商品列表
+    int32 total = 2;                // 总数量
+}
+
+message DeleteProductReq {
+    int64 id = 1;                    // 商品ID
+}
+
+message DeleteProductResp {
+    bool success = 1;                // 是否成功
+}
+
+message UpdateProductStatusReq {
+    int64 id = 1;                    // 商品ID
+    int32 status = 2;               // 商品状态：1-待上架 2-已上架 3-已下架
+}
+
+message UpdateProductStatusResp {
+    bool success = 1;                // 是否成功
+}
+
+// SKU管理接口消息体
+message CreateSKUReq {
+    int64 product_id = 1;           // 商品ID
+    map<string, string> specs = 2;   // 规格信息
+    int64 price = 3;                // 价格（单位：分）
+    int32 stock = 4;                // 库存数量
+    string code = 5;                // SKU编码
+}
+
+message CreateSKUResp {
+    SKU sku = 1;                     // 创建的SKU信息
+}
+
+message UpdateSKUReq {
+    int64 id = 1;                    // SKU ID
+    map<string, string> specs = 2;   // 规格信息
+    int64 price = 3;                // 价格（单位：分）
+    string code = 4;                // SKU编码
+}
+
+message UpdateSKUResp {
+    SKU sku = 1;                     // 更新后的SKU信息
+}
+
+message DeleteSKUReq {
+    int64 id = 1;                    // SKU ID
+}
+
+message DeleteSKUResp {
+    bool success = 1;                // 是否成功
+}
+
+message UpdateSKUStockReq {
+    int64 id = 1;                    // SKU ID
+    int32 stock = 2;                // 库存数量
+}
+
+message UpdateSKUStockResp {
+    SKU sku = 1;                     // 更新后的SKU信息
+}
+
+// 分类管理接口消息体
+message CreateCategoryReq {
+    string name = 1;                 // 分类名称
+    int64 parent_id = 2;            // 父分类ID
+    int32 level = 3;                // 分类层级
+    int32 sort_order = 4;           // 排序序号
+}
+
+message CreateCategoryResp {
+    Category category = 1;           // 创建的分类信息
+}
+
+message UpdateCategoryReq {
+    int64 id = 1;                    // 分类ID
+    string name = 2;                 // 分类名称
+    int32 sort_order = 3;           // 排序序号
+}
+
+message UpdateCategoryResp {
+    Category category = 1;           // 更新后的分类信息
+}
+
+message DeleteCategoryReq {
+    int64 id = 1;                    // 分类ID
+}
+
+message DeleteCategoryResp {
+    bool success = 1;                // 是否成功
+}
+
+message ListCategoriesReq {
+    int64 parent_id = 1;            // 父分类ID，0表示获取一级分类
+}
+
+message ListCategoriesResp {
+    repeated Category categories = 1; // 分类列表
+}
+
+message GetCategoryTreeReq {}
+
+message GetCategoryTreeResp {
+    repeated Category categories = 1; // 分类树
+}
+
+// 商品搜索接口消息体
 message SearchProductsReq {
-  string query = 1;
+    string keyword = 1;              // 搜索关键词
+    int64 category_id = 2;          // 分类ID，0表示全部分类
+    int32 page_size = 3;            // 每页数量
+    int32 page = 4;                 // 页码
+    int32 sort_by = 5;              // 排序方式：1-综合排序 2-价格升序 3-价格降序 4-销量排序
 }
 
 message SearchProductsResp {
-  repeated Product results = 1;
+    repeated Product products = 1;    // 商品列表
+    int32 total = 2;                // 总数量
+}
+
+message GetProductsByCategoryReq {
+    int64 category_id = 1;          // 分类ID
+    int32 page_size = 2;            // 每页数量
+    int32 page = 3;                 // 页码
+    int32 sort_by = 4;              // 排序方式：1-综合排序 2-价格升序 3-价格降序 4-销量排序
+}
+
+message GetProductsByCategoryResp {
+    repeated Product products = 1;    // 商品列表
+    int32 total = 2;                // 总数量
 }

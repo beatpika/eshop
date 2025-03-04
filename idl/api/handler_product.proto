@@ -1,0 +1,286 @@
+syntax = "proto3";
+
+package frontend.product;
+
+import "api/api.proto";
+import "api/common.proto";
+
+option go_package = "basic/product";
+
+// 商品管理请求响应
+message CreateProductReq {
+    string name = 1 [(api.form) = "name"];
+    string description = 2 [(api.form) = "description"];
+    int64 category_id = 3 [(api.form) = "category_id"];
+    repeated string images = 4 [(api.form) = "images"];
+    int64 price = 5 [(api.form) = "price"];
+    repeated SKUInfo skus = 6 [(api.form) = "skus"];
+}
+
+message CreateProductResp {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+message UpdateProductReq {
+    int64 product_id = 1;
+    string name = 2 [(api.form) = "name"];
+    string description = 3 [(api.form) = "description"];
+    int64 category_id = 4 [(api.form) = "category_id"];
+    repeated string images = 5 [(api.form) = "images"];
+    int64 price = 6 [(api.form) = "price"];
+}
+
+message UpdateProductResp {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+message GetProductReq {
+    int64 product_id = 1;
+}
+
+message GetProductResp {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+message ListProductsReq {
+    int32 page_size = 1 [(api.query) = "page_size"];
+    int32 page = 2 [(api.query) = "page"];
+}
+
+message ListProductsResp {
+    common.BaseResp base = 1;
+    repeated ProductInfo products = 2;
+    int32 total = 3;
+}
+
+message DeleteProductReq {
+    int64 product_id = 1;
+}
+
+message DeleteProductResp {
+    common.BaseResp base = 1;
+}
+
+message UpdateProductStatusReq {
+    int64 product_id = 1;
+    int32 status = 2 [(api.form) = "status"];
+}
+
+message UpdateProductStatusResp {
+    common.BaseResp base = 1;
+}
+
+// SKU管理请求响应
+message CreateSKUReq {
+    int64 product_id = 1;
+    map<string, string> specs = 2 [(api.form) = "specs"];
+    int64 price = 3 [(api.form) = "price"];
+    int32 stock = 4 [(api.form) = "stock"];
+    string code = 5 [(api.form) = "code"];
+}
+
+message CreateSKUResp {
+    common.BaseResp base = 1;
+    SKUInfo sku = 2;
+}
+
+message UpdateSKUReq {
+    int64 sku_id = 1;
+    map<string, string> specs = 2 [(api.form) = "specs"];
+    int64 price = 3 [(api.form) = "price"];
+    string code = 4 [(api.form) = "code"];
+}
+
+message UpdateSKUResp {
+    common.BaseResp base = 1;
+    SKUInfo sku = 2;
+}
+
+message DeleteSKUReq {
+    int64 sku_id = 1;
+}
+
+message DeleteSKUResp {
+    common.BaseResp base = 1;
+}
+
+message UpdateSKUStockReq {
+    int64 sku_id = 1;
+    int32 stock = 2 [(api.form) = "stock"];
+}
+
+message UpdateSKUStockResp {
+    common.BaseResp base = 1;
+    SKUInfo sku = 2;
+}
+
+// 分类管理请求响应
+message CreateCategoryReq {
+    string name = 1 [(api.form) = "name"];
+    int64 parent_id = 2 [(api.form) = "parent_id"];
+    int32 level = 3 [(api.form) = "level"];
+    int32 sort_order = 4 [(api.form) = "sort_order"];
+}
+
+message CreateCategoryResp {
+    common.BaseResp base = 1;
+    CategoryInfo category = 2;
+}
+
+message UpdateCategoryReq {
+    int64 category_id = 1;
+    string name = 2 [(api.form) = "name"];
+    int32 sort_order = 3 [(api.form) = "sort_order"];
+}
+
+message UpdateCategoryResp {
+    common.BaseResp base = 1;
+    CategoryInfo category = 2;
+}
+
+message DeleteCategoryReq {
+    int64 category_id = 1;
+}
+
+message DeleteCategoryResp {
+    common.BaseResp base = 1;
+}
+
+message ListCategoriesReq {
+    int64 parent_id = 1 [(api.query) = "parent_id"];
+}
+
+message ListCategoriesResp {
+    common.BaseResp base = 1;
+    repeated CategoryInfo categories = 2;
+}
+
+message GetCategoryTreeReq {}
+
+message GetCategoryTreeResp {
+    common.BaseResp base = 1;
+    repeated CategoryInfo categories = 2;
+}
+
+// 商品搜索请求响应
+message SearchProductsReq {
+    string keyword = 1 [(api.query) = "keyword"];
+    int64 category_id = 2 [(api.query) = "category_id"];
+    int32 page_size = 3 [(api.query) = "page_size"];
+    int32 page = 4 [(api.query) = "page"];
+    int32 sort_by = 5 [(api.query) = "sort_by"];
+}
+
+message SearchProductsResp {
+    common.BaseResp base = 1;
+    repeated ProductInfo products = 2;
+    int32 total = 3;
+}
+
+message GetProductsByCategoryReq {
+    int64 category_id = 1;
+    int32 page_size = 2 [(api.query) = "page_size"];
+    int32 page = 3 [(api.query) = "page"];
+    int32 sort_by = 4 [(api.query) = "sort_by"];
+}
+
+message GetProductsByCategoryResp {
+    common.BaseResp base = 1;
+    repeated ProductInfo products = 2;
+    int32 total = 3;
+}
+
+// 基础信息结构
+message ProductInfo {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    int64 category_id = 4;
+    repeated string images = 5;
+    int64 price = 6;
+    int32 status = 7;
+    repeated SKUInfo skus = 8;
+    int64 created_at = 9;
+    int64 updated_at = 10;
+}
+
+message SKUInfo {
+    int64 id = 1;
+    int64 product_id = 2;
+    map<string, string> specs = 3;
+    int64 price = 4;
+    int32 stock = 5;
+    string code = 6;
+}
+
+message CategoryInfo {
+    int64 id = 1;
+    string name = 2;
+    int64 parent_id = 3;
+    int32 level = 4;
+    int32 sort_order = 5;
+}
+
+service ProductHandler {
+    // 商品管理接口
+    rpc createProduct(CreateProductReq) returns (CreateProductResp) {
+        option (api.post) = "/product";
+    }
+    rpc updateProduct(UpdateProductReq) returns (UpdateProductResp) {
+        option (api.put) = "/product/:product_id";
+    }
+    rpc getProduct(GetProductReq) returns (GetProductResp) {
+        option (api.get) = "/product/:product_id";
+    }
+    rpc listProducts(ListProductsReq) returns (ListProductsResp) {
+        option (api.get) = "/products";
+    }
+    rpc deleteProduct(DeleteProductReq) returns (DeleteProductResp) {
+        option (api.delete) = "/product/:product_id";
+    }
+    rpc updateProductStatus(UpdateProductStatusReq) returns (UpdateProductStatusResp) {
+        option (api.put) = "/product/:product_id/status";
+    }
+
+    // SKU管理接口
+    rpc createSKU(CreateSKUReq) returns (CreateSKUResp) {
+        option (api.post) = "/product/:product_id/sku";
+    }
+    rpc updateSKU(UpdateSKUReq) returns (UpdateSKUResp) {
+        option (api.put) = "/sku/:sku_id";
+    }
+    rpc deleteSKU(DeleteSKUReq) returns (DeleteSKUResp) {
+        option (api.delete) = "/sku/:sku_id";
+    }
+    rpc updateSKUStock(UpdateSKUStockReq) returns (UpdateSKUStockResp) {
+        option (api.put) = "/sku/:sku_id/stock";
+    }
+
+    // 分类管理接口
+    rpc createCategory(CreateCategoryReq) returns (CreateCategoryResp) {
+        option (api.post) = "/category";
+    }
+    rpc updateCategory(UpdateCategoryReq) returns (UpdateCategoryResp) {
+        option (api.put) = "/category/:category_id";
+    }
+    rpc deleteCategory(DeleteCategoryReq) returns (DeleteCategoryResp) {
+        option (api.delete) = "/category/:category_id";
+    }
+    rpc listCategories(ListCategoriesReq) returns (ListCategoriesResp) {
+        option (api.get) = "/categories";
+    }
+    rpc getCategoryTree(GetCategoryTreeReq) returns (GetCategoryTreeResp) {
+        option (api.get) = "/categories/tree";
+    }
+
+    // 商品搜索接口
+    rpc searchProducts(SearchProductsReq) returns (SearchProductsResp) {
+        option (api.get) = "/products/search";
+    }
+    rpc getProductsByCategory(GetProductsByCategoryReq) returns (GetProductsByCategoryResp) {
+        option (api.get) = "/categories/:category_id/products";
+    }
+}
