@@ -5,6 +5,7 @@ import (
 
 	"github.com/beatpika/eshop/app/api/conf"
 	"github.com/beatpika/eshop/rpc_gen/kitex_gen/auth/authservice"
+	"github.com/beatpika/eshop/rpc_gen/kitex_gen/order/orderservice"
 	"github.com/beatpika/eshop/rpc_gen/kitex_gen/user/userservice"
 	"github.com/cloudwego/kitex/client"
 	consul "github.com/kitex-contrib/registry-consul"
@@ -13,6 +14,7 @@ import (
 var (
 	UserClient  userservice.Client
 	TokenClient authservice.Client
+	OrderClient orderservice.Client
 	once        sync.Once
 )
 
@@ -20,6 +22,7 @@ func Init() {
 	once.Do(func() {
 		InitUserClient()
 		InitTokenClient()
+		InitOrderClient()
 	})
 }
 
@@ -42,6 +45,17 @@ func InitTokenClient() {
 		panic(err)
 	}
 	TokenClient, err = authservice.NewClient("token", client.WithResolver(r))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func InitOrderClient() {
+	r, err := consul.NewConsulResolver(conf.GetConf().Hertz.RegistryAddr)
+	if err != nil {
+		panic(err)
+	}
+	OrderClient, err = orderservice.NewClient("order", client.WithResolver(r))
 	if err != nil {
 		panic(err)
 	}
