@@ -5,7 +5,8 @@ import (
 	"github.com/beatpika/eshop/app/product/biz/dal/redis"
 )
 
+// Init init dal
 func Init() {
-	redis.Init()
 	mysql.Init()
+	redis.Init()
 }

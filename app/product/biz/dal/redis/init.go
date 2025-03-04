@@ -2,23 +2,33 @@ package redis
 
 import (
 	"context"
+	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/beatpika/eshop/app/product/conf"
+	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/redis/go-redis/v9"
 )
 
-var (
-	RedisClient *redis.Client
-)
+var RDB *redis.Client
 
+// Init init redis client
 func Init() {
-	RedisClient = redis.NewClient(&redis.Options{
+	RDB = redis.NewClient(&redis.Options{
 		Addr:     conf.GetConf().Redis.Address,
-		Username: conf.GetConf().Redis.Username,
 		Password: conf.GetConf().Redis.Password,
 		DB:       conf.GetConf().Redis.DB,
 	})
-	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
-		panic(err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := RDB.Ping(ctx).Result()
+	if err != nil {
+		klog.Fatal("redis connect failed:", err)
 	}
+}
+
+// GetRDB get redis client
+func GetRDB() *redis.Client {
+	return RDB
 }
