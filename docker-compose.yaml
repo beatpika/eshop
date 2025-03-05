@@ -10,7 +10,7 @@ services:
       - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=demo_proto
+      - MYSQL_DATABASE=eshop
     volumes:
       - ./db/sql/ini:/docker-entrypoint-initdb.d
 
