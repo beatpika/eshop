@@ -45,7 +45,7 @@ curl -X POST 'http://localhost:8080/user/register' \
 -H 'Content-Type: application/x-www-form-urlencoded' \
 -d 'email=test@example.com' \
 -d 'username=testuser' \
--d 'password=password123' \
+-d 'password=password@123' \
 -d 'password_confirm=password@123' \
 -d 'phone=13800138000'
 ```
