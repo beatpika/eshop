@@ -2,19 +2,31 @@ package service
 
 import (
 	"context"
-	cart "github.com/beatpika/eshop/rpc_gen/kitex_gen/cart"
+
+	"github.com/beatpika/eshop/app/cart/biz/dal/redis"
+	"github.com/beatpika/eshop/rpc_gen/kitex_gen/cart"
 )
 
-type GetCartService struct {
-	ctx context.Context
-} // NewGetCartService new GetCartService
-func NewGetCartService(ctx context.Context) *GetCartService {
-	return &GetCartService{ctx: ctx}
-}
+func GetCart(ctx context.Context, req *cart.GetCartReq) (*cart.GetCartResp, error) {
+	// 从Redis获取购物车
+	items, err := redis.GetCart(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
 
-// Run create note info
-func (s *GetCartService) Run(req *cart.GetCartReq) (resp *cart.GetCartResp, err error) {
-	// Finish your business logic.
+	// 转换为响应格式
+	cartItems := make([]*cart.CartItem, 0, len(items))
+	for _, item := range items {
+		cartItems = append(cartItems, &cart.CartItem{
+			ProductId: item.ProductID,
+			Quantity:  item.Quantity,
+		})
+	}
 
-	return
+	return &cart.GetCartResp{
+		Cart: &cart.Cart{
+			UserId: req.UserId,
+			Items:  cartItems,
+		},
+	}, nil
 }
