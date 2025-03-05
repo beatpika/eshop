@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package frontend.cart;
+
+import "api/api.proto";
+import "api/common.proto";
+import "cart.proto";
+
+option go_package = "basic/cart";
+
+message AddCartItemReq {
+    uint32 product_id = 1 [(api.form) = "product_id"];
+    int32 quantity = 2 [(api.form) = "quantity"];
+    uint32 user_id = 3 [(api.form) = "user_id"];
+}
+
+message AddCartItemResp {
+    common.BaseResp base = 1;
+}
+
+message GetCartResp {
+    common.BaseResp base = 1;
+    .cart.Cart cart = 2;
+}
+
+message EmptyCartResp {
+    common.BaseResp base = 1;
+}
+
+service CartHandler {
+    rpc AddItem(AddCartItemReq) returns (AddCartItemResp) {
+        option (api.post) = "/cart/item";
+    }
+
+    rpc GetCart(.cart.GetCartReq) returns (GetCartResp) {
+        option (api.get) = "/cart";
+    }
+
+    rpc EmptyCart(.cart.EmptyCartReq) returns (EmptyCartResp) {
+        option (api.delete) = "/cart";
+    }
+}
