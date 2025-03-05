@@ -14,7 +14,7 @@ gen-gateway-product:
 
 .PHONY: gen-gateway-cart
 gen-gateway-cart:
-@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_cart.proto
+	@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_cart.proto
 
 .PHONY: gen-user
 gen-user: 
