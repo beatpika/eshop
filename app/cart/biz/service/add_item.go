@@ -2,19 +2,22 @@ package service
 
 import (
 	"context"
-	cart "github.com/beatpika/eshop/rpc_gen/kitex_gen/cart"
+
+	"github.com/beatpika/eshop/app/cart/biz/dal/redis"
+	"github.com/beatpika/eshop/rpc_gen/kitex_gen/cart"
 )
 
-type AddItemService struct {
-	ctx context.Context
-} // NewAddItemService new AddItemService
-func NewAddItemService(ctx context.Context) *AddItemService {
-	return &AddItemService{ctx: ctx}
-}
+func AddItem(ctx context.Context, req *cart.AddItemReq) (*cart.AddItemResp, error) {
+	// 创建购物车条目
+	item := &redis.CartItem{
+		ProductID: req.Item.ProductId,
+		Quantity:  req.Item.Quantity,
+	}
 
-// Run create note info
-func (s *AddItemService) Run(req *cart.AddItemReq) (resp *cart.AddItemResp, err error) {
-	// Finish your business logic.
+	// 添加到Redis
+	if err := redis.AddItem(ctx, req.UserId, item); err != nil {
+		return nil, err
+	}
 
-	return
+	return &cart.AddItemResp{}, nil
 }
