@@ -18,6 +18,7 @@ require (
 	github.com/hertz-contrib/pprof v0.1.2
 	github.com/kitex-contrib/registry-consul v0.1.0
 	github.com/kr/pretty v0.3.1
+	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.7.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
