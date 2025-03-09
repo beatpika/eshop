@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package frontend.order;
+
+import "api/api.proto";
+import "api/common.proto";
+
+option go_package = "basic/order";
+
+// 订单信息
+message OrderInfo {
+    string order_id = 1 [(api.go_tag) = 'json:"order_id"'];
+    int64 user_id = 2 [(api.go_tag) = 'json:"user_id"'];
+    string user_currency = 3 [(api.go_tag) = 'json:"user_currency"'];
+    string email = 4 [(api.go_tag) = 'json:"email"'];
+    repeated OrderItem items = 5 [(api.go_tag) = 'json:"items"'];
+    Address address = 6 [(api.go_tag) = 'json:"address"'];
+    OrderStatus status = 7 [(api.go_tag) = 'json:"status"'];
+    int64 created_at = 8 [(api.go_tag) = 'json:"created_at"'];
+    float total_cost = 9 [(api.go_tag) = 'json:"total_cost"'];
+}
+
+// 订单项
+message OrderItem {
+    int64 product_id = 1 [(api.go_tag) = 'json:"product_id"'];
+    string product_name = 2 [(api.go_tag) = 'json:"product_name"'];
+    float cost = 3 [(api.go_tag) = 'json:"cost"'];
+    int32 quantity = 4 [(api.go_tag) = 'json:"quantity"'];
+}
+
+// 地址信息
+message Address {
+    string street_address = 1 [(api.go_tag) = 'json:"street_address"'];
+    string city = 2 [(api.go_tag) = 'json:"city"'];
+    string state = 3 [(api.go_tag) = 'json:"state"'];
+    string country = 4 [(api.go_tag) = 'json:"country"'];
+    int32 zip_code = 5 [(api.go_tag) = 'json:"zip_code"'];
+}
+
+// 订单状态
+enum OrderStatus {
+    ORDER_STATUS_PENDING = 0;  // 待处理
+    ORDER_STATUS_FINISH = 1;   // 已完成
+    ORDER_STATUS_CANCEL = 2;   // 已取消
+}
+
+// 创建订单请求
+message CreateOrderRequest {
+    int64 user_id = 1 [(api.form) = "user_id"];
+    Address address = 2 [(api.form) = "address"];
+    string email = 3 [(api.form) = "email"];
+    repeated OrderItem items = 4 [(api.form) = "items"];
+}
+
+message CreateOrderResponse {
+    common.BaseResp base = 1;
+    OrderInfo order = 2;
+}
+
+// 更新订单请求
+message UpdateOrderRequest {
+    string order_id = 1 [(api.path) = "id"];
+    int64 user_id = 2 [(api.form) = "user_id"];
+    Address address = 3 [(api.form) = "address"];
+    string email = 4 [(api.form) = "email"];
+}
+
+message UpdateOrderResponse {
+    common.BaseResp base = 1;
+    OrderInfo order = 2;
+}
+
+// 更新订单状态请求
+message UpdateOrderStatusRequest {
+    string order_id = 1 [(api.path) = "id"];
+    int64 user_id = 2 [(api.form) = "user_id"];
+    OrderStatus status = 3 [(api.form) = "status"];
+}
+
+message UpdateOrderStatusResponse {
+    common.BaseResp base = 1;
+    OrderInfo order = 2;
+}
+
+// 获取订单列表请求
+message ListOrdersRequest {
+    int64 user_id = 1 [(api.form) = "user_id"];
+    int32 page_size = 2 [(api.query) = "page_size"];
+    int32 page_num = 3 [(api.query) = "page_num"];
+}
+
+message ListOrdersResponse {
+    common.BaseResp base = 1;
+    repeated OrderInfo orders = 2;
+    int32 total = 3;
+}
+
+// 订单服务
+service OrderHandler {
+    // 创建订单
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse) {
+        option (api.post) = "/orders";
+    }
+    
+    // 更新订单
+    rpc UpdateOrder(UpdateOrderRequest) returns (UpdateOrderResponse) {
+        option (api.put) = "/orders/:id";
+    }
+    
+    // 更新订单状态
+    rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse) {
+        option (api.put) = "/orders/:id/status";
+    }
+    
+    // 获取订单列表
+    rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
+        option (api.get) = "/orders";
+    }
+}
