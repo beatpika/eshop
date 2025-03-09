@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package frontend.product;
+
+import "api/api.proto";
+import "api/common.proto";
+
+option go_package = "basic/product";
+
+// Product information structure
+message ProductInfo {
+    uint32 id = 1 [(api.go_tag) = 'json:"id"'];
+    string name = 2 [(api.go_tag) = 'json:"name"'];
+    string description = 3 [(api.go_tag) = 'json:"description"'];
+    string picture = 4 [(api.go_tag) = 'json:"picture"'];
+    float price = 5 [(api.go_tag) = 'json:"price"'];
+    repeated string categories = 6 [(api.go_tag) = 'json:"categories"'];
+}
+
+// Create product
+message CreateProductRequest {
+    string name = 1 [(api.form) = "name"];
+    string description = 2 [(api.form) = "description"];
+    string picture = 3 [(api.form) = "picture"];
+    float price = 4 [(api.form) = "price"];
+    repeated string categories = 5 [(api.form) = "categories"];
+}
+
+message CreateProductResponse {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+// Update product
+message UpdateProductRequest {
+    uint32 id = 1 [(api.path) = "id"];
+    string name = 2 [(api.form) = "name"];
+    string description = 3 [(api.form) = "description"];
+    string picture = 4 [(api.form) = "picture"];
+    float price = 5 [(api.form) = "price"];
+    repeated string categories = 6 [(api.form) = "categories"];
+}
+
+message UpdateProductResponse {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+// Delete product
+message DeleteProductRequest {
+    uint32 id = 1 [(api.path) = "id"];
+}
+
+message DeleteProductResponse {
+    common.BaseResp base = 1;
+}
+
+// Get product details
+message GetProductRequest {
+    uint32 id = 1 [(api.path) = "id"];
+}
+
+message GetProductResponse {
+    common.BaseResp base = 1;
+    ProductInfo product = 2;
+}
+
+// Product list
+message ListProductsRequest {
+    int32 page = 1 [(api.query) = "page"];
+    int32 page_size = 2 [(api.query) = "page_size"];
+    string category = 3 [(api.query) = "category"];
+}
+
+message ListProductsResponse {
+    common.BaseResp base = 1;
+    repeated ProductInfo products = 2;
+    int32 total = 3;
+}
+
+// Search products
+message SearchProductsRequest {
+    string keywords = 1 [(api.query) = "keywords"];
+    int32 page = 2 [(api.query) = "page"];
+    int32 page_size = 3 [(api.query) = "page_size"];
+}
+
+message SearchProductsResponse {
+    common.BaseResp base = 1;
+    repeated ProductInfo products = 2;
+    int32 total = 3;
+}
+
+// Product management service
+service ProductHandler {
+    // Create product
+    rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {
+        option (api.post) = "/product/manage";
+    }
+    
+    // Update product
+    rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse) {
+        option (api.put) = "/product/manage/update/:id";
+    }
+    
+    // Delete product
+    rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse) {
+        option (api.delete) = "/product/manage/delete/:id";
+    }
+    
+    // Get product details
+    rpc GetProduct(GetProductRequest) returns (GetProductResponse) {
+        option (api.get) = "/product/detail/:id";
+    }
+    
+    // Get product list
+    rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+        option (api.get) = "/products";
+    }
+    
+    // Search products
+    rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse) {
+        option (api.get) = "/products/search";
+    }
+}
