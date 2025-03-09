@@ -18,5 +18,10 @@ gen-token:
 	@cd rpc_gen && cwgo client --type RPC --service token --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/auth.proto
 	@cd app/token && cwgo server --type RPC --service token --module ${ROOT_MOD}/app/token --pass "-use ${ROOT_MOD}/rpc_gen/kitex_gen"  -I ../../idl  --idl ../../idl/auth.proto
 
+.PHONY: gen-product
+gen-product: 
+	@cd rpc_gen && cwgo client --type RPC --service product --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/product.proto
+	@cd app/product && cwgo server --type RPC --service product --module ${ROOT_MOD}/app/product --pass "-use ${ROOT_MOD}/rpc_gen/kitex_gen"  -I ../../idl  --idl ../../idl/product.proto
+
 .PHONY: gen-all-gateway
 gen-all-gateway: gen-gateway-user gen-gateway-token
