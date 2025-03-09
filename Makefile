@@ -16,6 +16,10 @@ gen-gateway-product:
 gen-gateway-cart:
 	@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_cart.proto
 
+.PHONY: gen-gateway-order
+gen-gateway-order:
+	@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_order.proto
+
 .PHONY: gen-user
 gen-user: 
 	@cd rpc_gen && cwgo client --type RPC --service user --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/user.proto
@@ -35,6 +39,11 @@ gen-product:
 gen-cart: 
 	@cd rpc_gen && cwgo client --type RPC --service cart --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/cart.proto
 	@cd app/cart && cwgo server --type RPC --service cart --module ${ROOT_MOD}/app/cart --pass "-use ${ROOT_MOD}/rpc_gen/kitex_gen"  -I ../../idl  --idl ../../idl/cart.proto
+
+.PHONY: gen-order
+gen-order: 
+	@cd rpc_gen && cwgo client --type RPC --service order --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/order.proto
+	@cd app/order && cwgo server --type RPC --service order --module ${ROOT_MOD}/app/order --pass "-use ${ROOT_MOD}/rpc_gen/kitex_gen"  -I ../../idl  --idl ../../idl/order.proto
 
 .PHONY: gen-all-gateway
 gen-all-gateway: gen-gateway-user gen-gateway-token gen-gateway-product gen-gateway-cart
