@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"github.com/beatpika/eshop/app/product/biz/model"
 	"github.com/beatpika/eshop/app/product/conf"
 
 	"gorm.io/driver/mysql"
@@ -19,6 +20,11 @@ func Init() {
 			SkipDefaultTransaction: true,
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = DB.AutoMigrate(&model.Product{})
 	if err != nil {
 		panic(err)
 	}

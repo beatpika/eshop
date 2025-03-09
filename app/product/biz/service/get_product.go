@@ -1,11 +1,12 @@
 package service
 
 import (
-"context"
-"encoding/json"
+	"context"
+	"encoding/json"
 
-"github.com/beatpika/eshop/app/product/biz/dal/mysql"
-product "github.com/beatpika/eshop/rpc_gen/kitex_gen/product"
+	"github.com/beatpika/eshop/app/product/biz/dal/mysql"
+	"github.com/beatpika/eshop/app/product/biz/model"
+	product "github.com/beatpika/eshop/rpc_gen/kitex_gen/product"
 )
 
 type GetProductService struct {
@@ -22,7 +23,7 @@ func (s *GetProductService) Run(req *product.GetProductReq) (resp *product.GetPr
 	resp = &product.GetProductResp{}
 
 	// 从数据库获取商品
-	productModel, err := mysql.GetProductByID(mysql.DB, req.Id)
+	productModel, err := model.GetProductByID(mysql.DB, req.Id)
 	if err != nil {
 		return nil, err
 	}

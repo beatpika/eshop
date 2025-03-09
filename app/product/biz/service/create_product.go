@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/beatpika/eshop/app/product/biz/dal/mysql"
+	"github.com/beatpika/eshop/app/product/biz/model"
 	product "github.com/beatpika/eshop/rpc_gen/kitex_gen/product"
 )
 
@@ -26,7 +27,7 @@ func (s *CreateProductService) Run(req *product.CreateProductReq) (resp *product
 	}
 
 	// 创建商品记录
-	productModel := &mysql.Product{
+	productModel := &model.Product{
 		Name:        req.Name,
 		Description: req.Description,
 		Picture:     req.Picture,
@@ -35,7 +36,7 @@ func (s *CreateProductService) Run(req *product.CreateProductReq) (resp *product
 	}
 
 	// 保存到数据库
-	if err := mysql.CreateProduct(mysql.DB, productModel); err != nil {
+	if err := model.CreateProduct(mysql.DB, productModel); err != nil {
 		return nil, err
 	}
 

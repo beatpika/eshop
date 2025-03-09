@@ -4,17 +4,22 @@ import (
 	"net"
 	"time"
 
+	"github.com/beatpika/eshop/app/product/biz/dal"
+	"github.com/beatpika/eshop/app/product/conf"
+	"github.com/beatpika/eshop/rpc_gen/kitex_gen/product/productcatalogservice"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
-	"github.com/beatpika/eshop/app/product/conf"
-	"github.com/beatpika/eshop/rpc_gen/kitex_gen/product/productcatalogservice"
+	consul "github.com/kitex-contrib/registry-consul"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
+	// 初始化数据库连接
+	dal.Init()
+
 	opts := kitexInit()
 
 	svr := productcatalogservice.NewServer(new(ProductCatalogServiceImpl), opts...)
@@ -37,6 +42,13 @@ func kitexInit() (opts []server.Option) {
 	opts = append(opts, server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
 		ServiceName: conf.GetConf().Kitex.Service,
 	}))
+
+	// consul registry
+	r, err := consul.NewConsulRegister("127.0.0.1:8500")
+	if err != nil {
+		panic(err)
+	}
+	opts = append(opts, server.WithRegistry(r))
 
 	// klog
 	logger := kitexlogrus.NewLogger()

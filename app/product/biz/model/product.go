@@ -1,4 +1,4 @@
-package mysql
+package model
 
 import (
 	"time"
@@ -8,14 +8,15 @@ import (
 
 // Product 商品模型
 type Product struct {
+	gorm.Model
 	ID          uint32    `gorm:"primary_key;auto_increment"`
 	Name        string    `gorm:"type:varchar(255);not null"`
 	Description string    `gorm:"type:text"`
 	Picture     string    `gorm:"type:varchar(255)"`
 	Price       float32   `gorm:"type:decimal(10,2);not null"`
 	Categories  string    `gorm:"type:text"` // 使用JSON字符串存储分类数组
-	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP;ON UPDATE CURRENT_TIMESTAMP"`
+	CreatedAt   time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
+	UpdatedAt   time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 }
 
 // TableName 设置表名

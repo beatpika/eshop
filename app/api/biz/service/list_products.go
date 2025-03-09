@@ -3,7 +3,11 @@ package service
 import (
 	"context"
 
+	"github.com/beatpika/eshop/app/api/biz/utils"
 	product "github.com/beatpika/eshop/app/api/hertz_gen/basic/product"
+	"github.com/beatpika/eshop/app/api/hertz_gen/common"
+	"github.com/beatpika/eshop/app/api/infra/rpc"
+	rpc_product "github.com/beatpika/eshop/rpc_gen/kitex_gen/product"
 	"github.com/cloudwego/hertz/pkg/app"
 )
 
@@ -17,10 +21,37 @@ func NewListProductsService(Context context.Context, RequestContext *app.Request
 }
 
 func (h *ListProductsService) Run(req *product.ListProductsRequest) (resp *product.ListProductsResponse, err error) {
-	//defer func() {
-	// hlog.CtxInfof(h.Context, "req = %+v", req)
-	// hlog.CtxInfof(h.Context, "resp = %+v", resp)
-	//}()
-	// todo edit your code
-	return
+	resp = new(product.ListProductsResponse)
+	resp.Base = new(common.BaseResp)
+
+	// 构造RPC请求
+	rpcReq := &rpc_product.ListProductsReq{
+		Page:     int32(req.Page),
+		PageSize: int64(req.PageSize),
+		Category: req.Category,
+	}
+
+	// 调用RPC服务
+	rpcResp, err := rpc.ProductClient.ListProducts(h.Context, rpcReq)
+	if err != nil {
+		resp.Base = utils.BuildBaseResp(err)
+		return resp, nil
+	}
+
+	// 转换响应
+	resp.Products = make([]*product.ProductInfo, 0, len(rpcResp.Products))
+	for _, p := range rpcResp.Products {
+		resp.Products = append(resp.Products, &product.ProductInfo{
+			Id:          p.Id,
+			Name:        p.Name,
+			Description: p.Description,
+			Picture:     p.Picture,
+			Price:       p.Price,
+			Categories:  p.Categories,
+		})
+	}
+	resp.Total = rpcResp.Total
+
+	resp.Base = utils.BuildBaseResp(nil)
+	return resp, nil
 }
