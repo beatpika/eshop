@@ -8,6 +8,10 @@ gen-gateway-user:
 gen-gateway-token:
 	@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_token.proto
 
+.PHONY: gen-gateway-product
+gen-gateway-product:
+	@cd app/api && cwgo server -I ../../idl --type HTTP --service api --module ${ROOT_MOD}/app/api --idl ../../idl/api/handler_product.proto
+
 .PHONY: gen-user
 gen-user: 
 	@cd rpc_gen && cwgo client --type RPC --service user --module ${ROOT_MOD}/rpc_gen  -I ../idl  --idl ../idl/user.proto
