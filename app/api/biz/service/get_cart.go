@@ -46,8 +46,10 @@ func (h *GetCartService) Run(req *cart.GetCartReq) (resp *cart.GetCartResp, err 
 	// Convert cart info and enrich with product details
 	cartInfo := rpcResp.GetCart()
 	if cartInfo == nil {
+		// Return empty cart with success status
 		resp.Base.StatusMessage = "Success"
 		resp.Base.StatusCode = int32(common.StatusCode_STATUS_OK)
+		resp.Cart.UserId = req.UserId
 		return resp, nil
 	}
 
@@ -56,30 +58,33 @@ func (h *GetCartService) Run(req *cart.GetCartReq) (resp *cart.GetCartResp, err 
 	// Get product details for each item
 	var total int64
 	for _, item := range cartInfo.Items {
-		productResp, err := rpc.ProductClient.GetProduct(h.Context, &productrpc.GetProductReq{
-			Id: int64(item.ProductId),
+		rpcProductResp, err := rpc.ProductClient.GetProduct(h.Context, &productrpc.GetProductReq{
+			Id: uint32(item.ProductId),
 		})
 		if err != nil {
 			klog.Errorf("product rpc GetProduct error: %v", err)
-			continue
+			resp.Base.StatusMessage = "Failed to get product details"
+			resp.Base.StatusCode = int32(common.StatusCode_STATUS_INTERNAL_ERROR)
+			return resp, errors.Wrap(err, "product GetProduct error")
 		}
 
-		product := productResp.GetProduct()
-		if product == nil {
-			continue
+		productInfo := rpcProductResp.GetProduct()
+		if productInfo == nil {
+			klog.Warnf("product not found for id: %d", item.ProductId)
+			resp.Base.StatusMessage = "Some products not found"
+			resp.Base.StatusCode = int32(common.StatusCode_STATUS_NOT_FOUND)
+			return resp, errors.Errorf("product not found for id: %d", item.ProductId)
 		}
 
-		subtotal := int64(item.Quantity) * product.Price
-		var image string
-		if len(product.Images) > 0 {
-			image = product.Images[0]
-		}
+		// Convert price from float to int64 (cents)
+		priceInCents := int64(productInfo.Price * 100)
+		subtotal := int64(item.Quantity) * priceInCents
 
 		cartItem := &cart.CartItem{
 			ProductId:    int64(item.ProductId),
-			ProductName:  product.Name,
-			ProductImage: image,
-			Price:        product.Price,
+			ProductName:  productInfo.Name,
+			ProductImage: productInfo.Picture,
+			Price:        priceInCents,
 			Quantity:     item.Quantity,
 			Subtotal:     subtotal,
 		}
